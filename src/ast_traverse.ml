@@ -154,7 +154,8 @@ class ['ctx] map_with_context =
       fun ctx { body; clauses } ->
         { body = self#expression ctx body; clauses = self#list self#clause ctx clauses }
 
-    method function_param : ('ctx, Shim.Pexp_function.function_param) T.map_with_context =
+    method jfunction_param : ('ctx, Shim.Pexp_function.function_param) T.map_with_context
+        =
       fun ctx { pparam_desc; pparam_loc } ->
         { pparam_desc =
             (match pparam_desc with
@@ -169,10 +170,7 @@ class ['ctx] map_with_context =
                  , self#option (self#loc self#jkind) ctx jkind ))
         ; pparam_loc = self#location ctx pparam_loc
         }
-    [@@warning "-7"]
-    (* Silence "the following methods are overridden by the class," since we need to
-       compile against both the upstream shim (which does not define [function_param]) and
-       our internal shim (which does). *)
+    (* Internal function_params contain jkind annotations, upstream function_params do not. *)
 
     method function_constraint
       : ('ctx, Shim.Pexp_function.function_constraint) T.map_with_context =
@@ -184,10 +182,8 @@ class ['ctx] map_with_context =
              | Pcoerce (from_, to_) ->
                Pcoerce (self#option self#core_type ctx from_, self#core_type ctx to_))
         }
-    [@@warning "-7"]
-    (* See comment on [function_param]. *)
 
-    method function_body : ('ctx, Shim.Pexp_function.function_body) T.map_with_context =
+    method jfunction_body : ('ctx, Shim.Pexp_function.function_body) T.map_with_context =
       fun ctx -> function
         | Pfunction_body expr -> Pfunction_body (self#expression ctx expr)
         | Pfunction_cases (cases, loc, attrs) ->
@@ -195,7 +191,6 @@ class ['ctx] map_with_context =
             ( self#list self#case ctx cases
             , self#location ctx loc
             , self#attributes ctx attrs )
-    [@@warning "-7"]
     (* See comment on [function_param]. *)
 
     method! expression ctx expr =

@@ -79,8 +79,13 @@ end
 module Value_binding = struct
   let extract_modes vb = [], vb
 
-  let create ~loc ~pat ~expr ~modes:_ =
-    { pvb_pat = pat; pvb_expr = expr; pvb_attributes = []; pvb_loc = loc }
+  let create ?constraint_ ~loc ~pat ~expr ~modes:_ () =
+    { pvb_pat = pat
+    ; pvb_expr = expr
+    ; pvb_attributes = []
+    ; pvb_loc = loc
+    ; pvb_constraint = constraint_
+    }
   ;;
 end
 
@@ -152,7 +157,8 @@ module Pexp_function = struct
   let of_parsetree =
     let body_of_parsetree body =
       match body.pexp_desc with
-      | Pexp_function cases -> Pfunction_cases (cases, body.pexp_loc, body.pexp_attributes)
+      | Pexp_function ([], _, Pfunction_cases (cases, loc, attrs)) ->
+        Pfunction_cases (cases, loc, attrs)
       | _ -> Pfunction_body body
     in
     let finish ~rev_params ~constraint_ ~body =
@@ -176,12 +182,12 @@ module Pexp_function = struct
           ~rev_params:
             ({ pparam_loc = ty.loc; pparam_desc = Pparam_newtype (ty, None) }
              :: rev_params)
-      | Pexp_fun (lbl, eo, pat, body) ->
+      (* | Pexp_fun (lbl, eo, pat, body) ->
         loop_expr
           body
           ~rev_params:
             ({ pparam_loc = pat.ppat_loc; pparam_desc = Pparam_val (lbl, eo, pat) }
-             :: rev_params)
+             :: rev_params) *)
       | Pexp_constraint (body, ty) ->
         finish ~rev_params ~constraint_:(Some (Pconstraint ty)) ~body
       | _ ->
@@ -195,7 +201,8 @@ module Pexp_function = struct
     in
     fun expr_desc ~loc ->
       match expr_desc with
-      | Pexp_function cases -> Some ([], None, Pfunction_cases (cases, loc, []))
+      | Pexp_function ([], _, Pfunction_cases (cases, _, _)) ->
+        Some ([], None, Pfunction_cases (cases, loc, []))
       | _ -> loop_expr_desc expr_desc ~rev_params:[] ~containing_expr:None
   ;;
 end
@@ -218,11 +225,12 @@ module Core_type_desc = struct
     | Ptyp_constr of Longident.t loc * core_type list
     | Ptyp_object of object_field list * closed_flag
     | Ptyp_class of Longident.t loc * core_type list
-    | Ptyp_alias of core_type * string
+    | Ptyp_alias of core_type * string loc
     | Ptyp_variant of row_field list * closed_flag * label list option
     | Ptyp_poly of string loc list * core_type
     | Ptyp_package of package_type
     | Ptyp_extension of extension
+    | Ptyp_open of Longident.t loc * core_type
 
   let of_parsetree : core_type_desc -> t = function
     (* changed constructors *)
@@ -239,6 +247,7 @@ module Core_type_desc = struct
     | Ptyp_poly (a, b) -> Ptyp_poly (a, b)
     | Ptyp_package a -> Ptyp_package a
     | Ptyp_extension a -> Ptyp_extension a
+    | Ptyp_open (a, b) -> Ptyp_open (a, b)
   ;;
 
   let to_parsetree : t -> core_type_desc = function
@@ -270,6 +279,7 @@ module Core_type_desc = struct
     | Ptyp_poly (a, b) -> Ptyp_poly (a, b)
     | Ptyp_package a -> Ptyp_package a
     | Ptyp_extension a -> Ptyp_extension a
+    | Ptyp_open (a, b) -> Ptyp_open (a, b)
   ;;
 end
 
@@ -491,7 +501,7 @@ module Expression_desc = struct
     | Some (x1, x2, x3) -> Pexp_function (x1, x2, x3)
     | None ->
       (match expr_desc with
-       | Pexp_function _ | Pexp_fun _ ->
+       | Pexp_function _ ->
          (* matched by above call to [of_parsetree] *)
          assert false
        | Pexp_constraint (x1, x2) -> Pexp_constraint (x1, Some x2, [])
@@ -557,14 +567,12 @@ end
 
 module Signature_item_desc = struct
   type t =
-    | Psig_value of value_description
-    (** - [val x: T]
-            - [external x: T = "s1" ... "sn"]
-         *)
+    | Psig_value of value_description (** - [val x: T]
+                                          - [external x: T = "s1" ... "sn"] *)
     | Psig_type of rec_flag * type_declaration list
     (** [type t1 = ... and ... and tn  = ...] *)
     | Psig_typesubst of type_declaration list
-    (** [type t1 := ... and ... and tn := ...]  *)
+    (** [type t1 := ... and ... and tn := ...] *)
     | Psig_typext of type_extension (** [type t1 += ...] *)
     | Psig_exception of type_exception (** [exception C of T] *)
     | Psig_module of module_declaration (** [module X = M] and [module X : MT] *)
@@ -573,7 +581,7 @@ module Signature_item_desc = struct
     (** [module rec X1 : MT1 and ... and Xn : MTn] *)
     | Psig_modtype of module_type_declaration
     (** [module type S = MT] and [module type S] *)
-    | Psig_modtypesubst of module_type_declaration (** [module type S :=  ...]  *)
+    | Psig_modtypesubst of module_type_declaration (** [module type S :=  ...] *)
     | Psig_open of open_description (** [open X] *)
     | Psig_include of include_description * Modalities.t (** [include MT] *)
     | Psig_class of class_description list (** [class c1 : ... and ... and cn : ...] *)

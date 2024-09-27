@@ -17,8 +17,8 @@ class ['ctx] map_with_context : object
   method comprehension :
     ('ctx, Jane_syntax.Comprehensions.comprehension) T.map_with_context
 
-  method function_param : ('ctx, Shim.Pexp_function.function_param) T.map_with_context
-  method function_body : ('ctx, Shim.Pexp_function.function_body) T.map_with_context
+  method jfunction_param : ('ctx, Shim.Pexp_function.function_param) T.map_with_context
+  method jfunction_body : ('ctx, Shim.Pexp_function.function_body) T.map_with_context
 
   method function_constraint :
     ('ctx, Shim.Pexp_function.function_constraint) T.map_with_context

@@ -35,7 +35,13 @@ module type S = sig
 
   (** Contruct a [value_binding] with modes *)
   val value_binding
-    : (pat:pattern -> expr:expression -> modes:modes -> value_binding) with_loc
+    : (?constraint_:value_constraint
+       -> pat:pattern
+       -> expr:expression
+       -> modes:modes
+       -> unit
+       -> value_binding)
+        with_loc
 
   (** Construct a [Pcstr_tuple], a representation for the contents of a tupled variant
       constructor, that attaches the provided modalities to each field. *)
@@ -52,12 +58,12 @@ module type S = sig
 
   (** Splits a possibly-modality-annotated field of a tupled variant constructor into a
       pair of its modality and the unannotated field.  If the resulting mode is [None],
-      then the field is returned unchanged.  *)
+      then the field is returned unchanged. *)
   val get_tuple_field_modalities : Pcstr_tuple_arg.t -> modality list * core_type
 
   (** Splits a possibly-modality-annotated label declaration into a pair of its modality
       and the unannotated label declaration.  If the resulting modality is [None], then
-      the label declaration is returned unchanged.  *)
+      the label declaration is returned unchanged. *)
   val get_label_declaration_modalities
     :  label_declaration
     -> modality list * label_declaration
@@ -124,8 +130,7 @@ module type S = sig
       Notably, unparenthesized [function] has a special meaning when used as a direct body
       of [fun]: the [function] becomes part of the arity of the outer [fun]. The same
       does not apply for multiple nested [function]s, even if they each have a single
-      case; the nested [function]s are treated as unary. (See the last example.)
-  *)
+      case; the nested [function]s are treated as unary. (See the last example.) *)
 
   type function_param = Shim.Pexp_function.function_param
   type function_constraint = Shim.Pexp_function.function_constraint
@@ -157,9 +162,7 @@ module type S = sig
         is the length of [pats].
 
       In other words, [coalesce_fun_arity = true] allows you to build up the arity of
-      an already-constructed function rather than necessarily creating a new function.
-
-  *)
+      an already-constructed function rather than necessarily creating a new function. *)
   val eabstract
     : (?coalesce_fun_arity:bool
        -> ?return_constraint:core_type
@@ -176,14 +179,12 @@ module type S = sig
       Alternatively, use [pexp_function] to provide all parameters at once.
 
       The attributes of the resulting expression will be the [attrs] argument together
-      with any attributes added by the Jane Street compiler.
-  *)
+      with any attributes added by the Jane Street compiler. *)
   val unary_function : (?attrs:attributes -> case list -> expression) with_loc
 
   (** [fun_param lbl pat] is [Pparam_val (lbl, None, pat)]. This gives a more
       self-documenting way of constructing the usual case: value parameters without
-      optional argument defaults.
-  *)
+      optional argument defaults. *)
   val fun_param : (arg_label -> pattern -> function_param) with_loc
 
   (** Say an expression is a "function" if it is a [Pexp_fun] or a [Pexp_function].
@@ -198,9 +199,7 @@ module type S = sig
         together with any attributes already present on [e].
       - If [e] is not a function, then [e'] is a function with arity [1], namely:
         [fun <param> -> <e>]. The attributes of the resulting expression will be the
-        [attrs] argument together with any attributes added by the Jane Street compiler.
-
-  *)
+        [attrs] argument together with any attributes added by the Jane Street compiler. *)
   val add_fun_param
     : (?attrs:attributes
        -> ?return_constraint:core_type
@@ -213,8 +212,7 @@ module type S = sig
 
   (** [add_params params e] is [List.fold_right params ~init:e ~f:add_param].
       Note the [fold_right]: if [e] is [fun <params'> -> <body>], then
-      [add_params params e] is [fun <params @ params'> -> <body>].
-  *)
+      [add_params params e] is [fun <params @ params'> -> <body>]. *)
   val add_fun_params
     : (?attrs:attributes
        -> ?return_constraint:core_type
@@ -231,8 +229,7 @@ module type S = sig
       You should usually call [coalesce_fun_arity] on metaquot fun expressions whose body
       may be a function, e.g.:
 
-      [coalesce_fun_arity [%expr fun x y -> [%e possibly_function]]]
-  *)
+      [coalesce_fun_arity [%expr fun x y -> [%e possibly_function]]] *)
   val coalesce_fun_arity : expression -> expression
 
   (** {2 Unboxed types} *)

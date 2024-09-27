@@ -50,7 +50,9 @@ module Default = struct
     { ppat_loc_stack = []; ppat_attributes = []; ppat_loc = loc; ppat_desc }
   ;;
 
-  let value_binding = Shim.Value_binding.create
+  let value_binding ~loc ?constraint_ ~pat ~expr ~modes =
+    Shim.Value_binding.create ?constraint_ ~loc ~pat ~expr ~modes
+  ;;
 
   let pcstr_tuple ~loc modalities_tys =
     Pcstr_tuple
@@ -245,8 +247,8 @@ struct
   let pexp_constraint a b c : expression = pexp_constraint ~loc a b c
   let ppat_constraint a b c : pattern = ppat_constraint ~loc a b c
 
-  let value_binding ~pat ~expr ~modes : value_binding =
-    value_binding ~loc ~pat ~expr ~modes
+  let value_binding ?constraint_ ~pat ~expr ~modes () : value_binding =
+    value_binding ?constraint_ ~loc ~pat ~expr ~modes ()
   ;;
 
   let pcstr_tuple fields : constructor_arguments = pcstr_tuple ~loc fields

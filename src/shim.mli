@@ -25,11 +25,11 @@ end
 
 (** Function arguments; a value of this type represents:
     - [arg_mode arg_type -> ...] when [arg_label] is
-      {{!Asttypes.arg_label.Nolabel}[Nolabel]},
+      {{!Asttypes.arg_label.Nolabel} [Nolabel]},
     - [l:arg_mode arg_type -> ...] when [arg_label] is
-      {{!Asttypes.arg_label.Labelled}[Labelled]}, and
+      {{!Asttypes.arg_label.Labelled} [Labelled]}, and
     - [?l:arg_mode arg_type -> ...] when [arg_label] is
-      {{!Asttypes.arg_label.Optional}[Optional]}. *)
+      {{!Asttypes.arg_label.Optional} [Optional]}. *)
 type arrow_argument =
   { arg_label : arg_label
   ; arg_modes : Modes.t
@@ -98,10 +98,12 @@ module Value_binding : sig
   val extract_modes : value_binding -> Modes.t * value_binding
 
   val create
-    :  loc:Location.t
+    :  ?constraint_:value_constraint
+    -> loc:Location.t
     -> pat:pattern
     -> expr:expression
     -> modes:Modes.t
+    -> unit
     -> value_binding
 end
 
@@ -161,11 +163,12 @@ module Core_type_desc : sig
     | Ptyp_constr of Longident.t loc * core_type list
     | Ptyp_object of object_field list * closed_flag
     | Ptyp_class of Longident.t loc * core_type list
-    | Ptyp_alias of core_type * string
+    | Ptyp_alias of core_type * string loc
     | Ptyp_variant of row_field list * closed_flag * label list option
     | Ptyp_poly of string loc list * core_type
     | Ptyp_package of package_type
     | Ptyp_extension of extension
+    | Ptyp_open of Longident.t loc * core_type
 
   val of_parsetree : core_type_desc -> t
   val to_parsetree : t -> core_type_desc
@@ -271,14 +274,12 @@ end
 
 module Signature_item_desc : sig
   type t =
-    | Psig_value of value_description
-    (** - [val x: T]
-            - [external x: T = "s1" ... "sn"]
-         *)
+    | Psig_value of value_description (** - [val x: T]
+                                          - [external x: T = "s1" ... "sn"] *)
     | Psig_type of rec_flag * type_declaration list
     (** [type t1 = ... and ... and tn  = ...] *)
     | Psig_typesubst of type_declaration list
-    (** [type t1 := ... and ... and tn := ...]  *)
+    (** [type t1 := ... and ... and tn := ...] *)
     | Psig_typext of type_extension (** [type t1 += ...] *)
     | Psig_exception of type_exception (** [exception C of T] *)
     | Psig_module of module_declaration (** [module X = M] and [module X : MT] *)
@@ -287,7 +288,7 @@ module Signature_item_desc : sig
     (** [module rec X1 : MT1 and ... and Xn : MTn] *)
     | Psig_modtype of module_type_declaration
     (** [module type S = MT] and [module type S] *)
-    | Psig_modtypesubst of module_type_declaration (** [module type S :=  ...]  *)
+    | Psig_modtypesubst of module_type_declaration (** [module type S :=  ...] *)
     | Psig_open of open_description (** [open X] *)
     | Psig_include of include_description * Modalities.t (** [include MT] *)
     | Psig_class of class_description list (** [class c1 : ... and ... and cn : ...] *)

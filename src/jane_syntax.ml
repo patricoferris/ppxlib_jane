@@ -1,5 +1,5 @@
 (*_ This file is manually imported from the Jane Street version of the
-   OCaml compiler. Don't make changes directly to this file. *)
+  OCaml compiler. Don't make changes directly to this file. *)
 [@@@ocaml.warning "-missing-record-field-pattern"]
 
 open! Shadow_compiler_distribution
@@ -9,8 +9,7 @@ open Jane_syntax_parsing
 
 (** We carefully regulate which bindings we import from [Language_extension]
     to ensure that we can import this file into the Jane Street internal
-    repo with no changes.
-*)
+    repo with no changes. *)
 module Language_extension = struct
   include Language_extension_kernel
 
@@ -183,8 +182,7 @@ module type Structure_item_encodable = sig
 
   (** For error messages: a name that can be used to identify the
       [t] being converted to and from string, and its indefinite
-      article (either "a" or "an").
-  *)
+      article (either "a" or "an"). *)
   val indefinite_article_and_name : string * string
 end
 
@@ -196,8 +194,7 @@ module type Stringable = sig
 
   (** For error messages: a name that can be used to identify the
       [t] being converted to and from string, and its indefinite
-      article (either "a" or "an").
-  *)
+      article (either "a" or "an"). *)
   val indefinite_article_and_name : string * string
 end
 
@@ -1244,7 +1241,7 @@ module Layouts = struct
           let has_name, inner_typ =
             match name with
             | None -> "anon", aliased_type
-            | Some name -> "named", Ast_helper.Typ.alias aliased_type name
+            | Some name -> "named", Ast_helper.Typ.alias aliased_type { txt = name; loc }
           in
           Type_of.wrap_jane_syntax [ "alias"; has_name ] ~payload inner_typ)
     with
@@ -1283,7 +1280,7 @@ module Layouts = struct
         let jkind = Decode.from_payload ~loc payload in
         (match typ.ptyp_desc with
          | Ptyp_alias (inner_typ, name) ->
-           Ltyp_alias { aliased_type = inner_typ; name = Some name; jkind }
+           Ltyp_alias { aliased_type = inner_typ; name = Some name.txt; jkind }
          | _ -> Desugaring_error.raise ~loc (Unexpected_wrapped_type typ))
       | _ -> Desugaring_error.raise ~loc (Unexpected_attribute names)
     in
@@ -1307,7 +1304,7 @@ module Layouts = struct
           let vars, jkinds = List.split bound_vars in
           let ext_ctor =
             (* Pass ~loc here, because the constructor declaration is
-                 not a ghost *)
+               not a ghost *)
             Ast_helper.Te.decl ~loc ~vars ~args ?info ?docs ?res name
           in
           if List.for_all Option.is_none jkinds

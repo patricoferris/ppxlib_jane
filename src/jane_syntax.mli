@@ -1,5 +1,5 @@
 (*_ This file is manually imported from the Jane Street version of the
-   OCaml compiler. Don't make changes directly to this file. *)
+  OCaml compiler. Don't make changes directly to this file. *)
 [@@@ocaml.warning "-missing-record-field-pattern"]
 
 open! Shadow_compiler_distribution
@@ -8,16 +8,16 @@ open! Shadow_compiler_distribution
     three things:
 
     1. First-class ASTs for all syntax introduced by our language extensions,
-       plus one for built-in features; these are split out into a different
-       module each ([Comprehensions], etc.).
+    plus one for built-in features; these are split out into a different
+    module each ([Comprehensions], etc.).
 
     2. A first-class AST for each OCaml AST, unifying all our novel syntactic
-       features in modules named after the syntactic category
-       ([Expression.t], etc.).
+    features in modules named after the syntactic category
+    ([Expression.t], etc.).
 
     3. A way to interpret these values as terms of the coresponding OCaml ASTs,
-       and to match on terms of those OCaml ASTs to see if they're terms from
-       our novel syntax.
+    and to match on terms of those OCaml ASTs to see if they're terms from
+    our novel syntax.
 
     We keep our novel syntax separate so that we can avoid having to modify the
     existing AST, as this would break compatibility with every existing ppx and
@@ -35,7 +35,7 @@ open! Shadow_compiler_distribution
    [Language_extension_kernel] and a small stub for [Language_extension], are
    buildable with the upstream compiler and compiler-libs.  This allows us to
    import these files into compatibility libraries such as
-   {{:https://github.com/janestreet/ppxlib_jane}ppxlib_jane}.  We have CI tests
+   {{:https://github.com/janestreet/ppxlib_jane} ppxlib_jane}.  We have CI tests
    which ensure that this property is maintained.
 
    It is possible that at some point we'll really need to depend on new
@@ -83,7 +83,7 @@ module Comprehensions : sig
     | Cexp_array_comprehension of Asttypes.mutable_flag * comprehension
     (** [|BODY ...CLAUSES...|] (flag = Mutable)
         [:BODY ...CLAUSES...:] (flag = Immutable)
-          (only allowed with [-extension immutable_arrays]) *)
+        (only allowed with [-extension immutable_arrays]) *)
 
   val expr_of : loc:Location.t -> expression -> Parsetree.expression
 end
@@ -105,8 +105,7 @@ end
 (** The attribute placed on the inner [Ptyp_arrow] node in [x -> (y -> z)]
     (meaning the [y -> z] node) to indicate parenthesization. This is relevant
     for locals, as [local_ x -> (y -> z)] is different than
-    [local_ x -> y -> z].
-*)
+    [local_ x -> y -> z]. *)
 module Arrow_curry : sig
   val curry_attr_name : string
   val curry_attr : Location.t -> Parsetree.attribute
@@ -139,52 +138,46 @@ end
     existing [P{typ,exp,pat}_tuple] constructors with these. *)
 module Labeled_tuples : sig
   (** [tl] represents a product type:
-          - [T1 * ... * Tn]       when [tl] is [(None,T1);...;(None,Tn)]
-          - [L1:T1 * ... * Ln:Tn] when [tl] is [(Some L1,T1);...;(Some Ln,Tn)]
-          - A mix, e.g. [L1:T1,T2] when [tl] is [(Some L1,T1);(None,T2)]
+      - [T1 * ... * Tn]       when [tl] is [(None,T1);...;(None,Tn)]
+      - [L1:T1 * ... * Ln:Tn] when [tl] is [(Some L1,T1);...;(Some Ln,Tn)]
+      - A mix, e.g. [L1:T1,T2] when [tl] is [(Some L1,T1);(None,T2)]
 
-          Invariant: [n >= 2].
-      *)
+      Invariant: [n >= 2]. *)
   type core_type = (string option * Parsetree.core_type) list
 
   (** [el] represents
-          - [(E1, ..., En)]
-              when [el] is [(None, E1);...;(None, En)]
-          - [(~L1:E1, ..., ~Ln:En)]
-              when [el] is [(Some L1, E1);...;(Some Ln, En)]
-          - A mix, e.g.:
-              [(~L1:E1, E2)] when [el] is [(Some L1, E1); (None, E2)]
+      - [(E1, ..., En)]
+        when [el] is [(None, E1);...;(None, En)]
+      - [(~L1:E1, ..., ~Ln:En)]
+        when [el] is [(Some L1, E1);...;(Some Ln, En)]
+      - A mix, e.g.:
+        [(~L1:E1, E2)] when [el] is [(Some L1, E1); (None, E2)]
 
-          Invariant: [n >= 2].
-      *)
+      Invariant: [n >= 2]. *)
   type expression = (string option * Parsetree.expression) list
 
   (** [(pl, Closed)] represents
-          - [(P1, ..., Pn)]       when [pl] is [(None, P1);...;(None, Pn)]
-          - [(L1:P1, ..., Ln:Pn)] when [pl] is
-                                              [(Some L1, P1);...;(Some Ln, Pn)]
-          - A mix, e.g. [(L1:P1, P2)] when [pl] is [(Some L1, P1);(None, P2)]
-          - If pattern is open, then it also ends in a [..]
+      - [(P1, ..., Pn)]       when [pl] is [(None, P1);...;(None, Pn)]
+      - [(L1:P1, ..., Ln:Pn)] when [pl] is
+        [(Some L1, P1);...;(Some Ln, Pn)]
+      - A mix, e.g. [(L1:P1, P2)] when [pl] is [(Some L1, P1);(None, P2)]
+      - If pattern is open, then it also ends in a [..]
 
-        Invariant:
-        - If Closed, [n >= 2].
-        - If Open, [n >= 1].
-      *)
+      Invariant:
+      - If Closed, [n >= 2].
+      - If Open, [n >= 1]. *)
   type pattern = (string option * Parsetree.pattern) list * Asttypes.closed_flag
 
   (** Embeds the core type in Jane Syntax only if there are any labels.
-      Otherwise, returns a normal [Ptyp_tuple].
-  *)
+      Otherwise, returns a normal [Ptyp_tuple]. *)
   val typ_of : loc:Location.t -> core_type -> Parsetree.core_type
 
   (** Embeds the expression in Jane Syntax only if there are any labels.
-      Otherwise, returns a normal [Pexp_tuple].
-  *)
+      Otherwise, returns a normal [Pexp_tuple]. *)
   val expr_of : loc:Location.t -> expression -> Parsetree.expression
 
   (** Embeds the pattern in Jane Syntax only if there are any labels or
-      if the pattern is open. Otherwise, returns a normal [Ppat_tuple].
-  *)
+      if the pattern is open. Otherwise, returns a normal [Ppat_tuple]. *)
   val pat_of : loc:Location.t -> pattern -> Parsetree.pattern
 end
 
@@ -314,8 +307,7 @@ module Layouts : sig
   (** Extract the jkind annotation from a [type_declaration]; returns
       leftover attributes. Similar to [of_constructor_declaration] in the
       sense that users of this function will have to process the remaining
-      pieces of the original [type_declaration].
-  *)
+      pieces of the original [type_declaration]. *)
   val of_type_declaration
     :  Parsetree.type_declaration
     -> (Jkind.annotation * Parsetree.attributes) option
@@ -337,8 +329,7 @@ module type AST = sig
       in cases where the Jane Syntax encoding of the AST uses attributes. In
       these cases, the [Parsetree.attributes] are the *rest* of the attributes
       after removing Jane Syntax-related attributes. Callers of [of_ast] should
-      refer to these attributes rather than, for example, [pexp_attributes].
-  *)
+      refer to these attributes rather than, for example, [pexp_attributes]. *)
   type t
 
   (** The corresponding OCaml AST *)
